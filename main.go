@@ -3,11 +3,11 @@ package main
 import (
 	"fmt"
 	"log"
+	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"syscall"
 
 	"github.com/gotk3/gotk3/glib"
 	"github.com/gotk3/gotk3/gtk"
@@ -47,33 +47,11 @@ func setupWindow(title string) *gtk.Window {
 
 var url string
 
-func createNamedPipe(pipePath string) error {
-	err := syscall.Mkfifo(pipePath, 0666)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func writeToPipe(pipePath string, message string) error {
-	file, err := os.OpenFile(pipePath, os.O_WRONLY, os.ModeNamedPipe)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	_, err = file.WriteString(message)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 const (
-	lockFilePath = "/tmp/firefox-profiles-selector.lock"
-	pipePath     = "/tmp/firefox-profiles-selector.pipe"
+	socketPath = "/tmp/firefox-profiles-selector.sock"
 )
+
+var isDestroyed = false
 
 func main() {
 	if len(os.Args) > 1 {
@@ -82,49 +60,55 @@ func main() {
 		url = "about:newtab"
 	}
 
-	_, err := os.Stat(lockFilePath)
-	if err == nil {
-		writeToPipe(pipePath, url)
-		os.Exit(0)
-	} else {
-		createNamedPipe(pipePath)
-		lockFile, err := os.Create(lockFilePath)
+	_, err := os.Stat(socketPath)
+	if err != nil {
+		os.Remove(socketPath)
+		listener, err := net.Listen("unix", socketPath)
 		if err != nil {
-			fmt.Println("Failed to create the lock file:", err)
-			os.Exit(1)
+			fmt.Println("Error creating listener:", err)
+			return
 		}
-		defer lockFile.Close()
+		defer listener.Close()
+		go func() {
+			for {
+				// Accept connections from clients
+				conn, err := listener.Accept()
+				if err != nil {
+					fmt.Println("Error accepting connection:", err)
+					continue
+				}
+				defer conn.Close()
 
-		gtk.Init(nil)
+				// Handle incoming data
+				buffer := make([]byte, 1024)
+				n, err := conn.Read(buffer)
+				if err != nil {
+					fmt.Println("Error reading from client:", err)
+					continue
+				}
 
-		win := setupWindow("Firefox profile selector")
-
-		win.Connect("destroy", func() {
-			if err := os.Remove(lockFilePath); err != nil {
-				fmt.Println("Failed to remove the lock file:", err)
+				// Process the received data
+				data := buffer[:n]
+				url = string(data)
 			}
-		})
+		}()
+		gtk.Init(nil)
+		win := setupWindow("Firefox profile selector")
 
 		win.ShowAll()
 		gtk.Main()
-		file, err := os.OpenFile(pipePath, os.O_RDONLY, os.ModeNamedPipe)
+	} else {
+		conn, err := net.Dial("unix", socketPath)
 		if err != nil {
-			fmt.Println("Failed to open the pipe:", err)
-			os.Exit(1)
+			fmt.Println("Error connecting to server:", err)
+			return
 		}
-		defer file.Close()
-
-		// Listen for commands from the CLI app
-		for {
-			buffer := make([]byte, 1024)
-			n, err := file.Read(buffer)
-			if err != nil {
-				fmt.Println("Error reading from the pipe:", err)
-				continue
-			}
-
-			command := string(buffer[:n])
-			fmt.Println("Received command from CLI:", command)
+		defer conn.Close()
+		// Send data to the server
+		_, err = conn.Write([]byte(url))
+		if err != nil {
+			fmt.Println("Error writing to server:", err)
+			return
 		}
 	}
 }
