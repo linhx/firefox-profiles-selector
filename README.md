@@ -21,6 +21,7 @@ But opening Profile manager window is slow. So I create this simple app for fast
 2. Extract to your apps directory. E.g. `~/apps`
 3. Run `cd ~/apps/firefox-profile-selector`. (Replace with your apps directory)
 4. Run `./install.sh`
+5. Update the `profiles_path` in `config.ini` if needed. If you are not using snap firefox, then it should be `.mozilla/firefox/profiles.ini`
 
 ## TODO
 
