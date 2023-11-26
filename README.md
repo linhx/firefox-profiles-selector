@@ -26,3 +26,12 @@ But opening Profile manager window is slow. So I create this simple app for fast
 ## TODO
 
 - [ ] Keep the app alive if booting app is slow. For now it's just fine.
+
+## Development
+
+### Prerequire
+
+```
+sudo apt-get install libgtk-3-dev
+```
+
