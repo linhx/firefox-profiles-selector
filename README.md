@@ -1,6 +1,6 @@
 # Firefox profiles selector
 
-Allow to select firefox profile to open an external link
+Allow to select firefox profile when open an external link
 
 ## Motivation
 
