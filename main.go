@@ -28,7 +28,6 @@ func main() {
 	win := setupWindow("Firefox profile selector")
 	win.ShowAll()
 	gtk.Main()
-
 }
 
 const BUTTON_WIDTH = 40
@@ -76,19 +75,7 @@ func setupWindow(title string) *gtk.Window {
 	}
 	btnBox.SetHAlign(gtk.ALIGN_CENTER)
 
-	// add buttons
-	profilesName := getProfiles()
-
-	for _, profileName := range profilesName {
-		showProfilesButton(btnBox, profileName)
-	}
-
-	mainBox.PackStart(btnBox, false, false, 0)
-	win.Add(mainBox)
-	return win
-}
-
-func getProfiles() []string {
+	// get configurations
 	exePath, err := os.Executable()
 	if err != nil {
 		fmt.Println("Error:", err)
@@ -101,13 +88,31 @@ func getProfiles() []string {
 		fmt.Printf("Fail to read file: %v", err)
 		os.Exit(1)
 	}
-
 	profilesIniPath := cfg.Section("setting").Key("profiles_path").String()
 	if strings.HasPrefix(profilesIniPath, "~/") {
 		home, _ := os.UserHomeDir()
 		profilesIniPath = filepath.Join(home, profilesIniPath[2:])
 	}
 
+	// add buttons
+	profilesName := getProfiles(profilesIniPath)
+
+	firefoxExecuteFilePath := cfg.Section("setting").Key("exec_path").String()
+	if strings.HasPrefix(profilesIniPath, "~/") {
+		home, _ := os.UserHomeDir()
+		firefoxExecuteFilePath = filepath.Join(home, profilesIniPath[2:])
+	}
+
+	for _, profileName := range profilesName {
+		showProfilesButton(btnBox, profileName, firefoxExecuteFilePath)
+	}
+
+	mainBox.PackStart(btnBox, false, false, 0)
+	win.Add(mainBox)
+	return win
+}
+
+func getProfiles(profilesIniPath string) []string {
 	profilesCfg, err := ini.Load(profilesIniPath)
 	if err != nil {
 		fmt.Printf("Fail to read file: %v", err)
@@ -123,10 +128,10 @@ func getProfiles() []string {
 	return profilesName
 }
 
-func showProfilesButton(buttonContainer *gtk.Box, profileName string) {
+func showProfilesButton(buttonContainer *gtk.Box, profileName string, execPath string) {
 	btn, _ := gtk.ButtonNew()
 	btn.Connect("clicked", func() {
-		cmd := exec.Command("firefox", "-P", profileName, "-new-tab", url)
+		cmd := exec.Command(execPath, "-P", profileName, "-new-tab", url)
 		if err := cmd.Start(); err != nil {
 			log.Printf("Failed to start cmd: %v", err)
 			gtk.MainQuit()
