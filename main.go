@@ -98,9 +98,9 @@ func setupWindow(title string) *gtk.Window {
 	profilesName := getProfiles(profilesIniPath)
 
 	firefoxExecuteFilePath := cfg.Section("setting").Key("exec_path").String()
-	if strings.HasPrefix(profilesIniPath, "~/") {
+	if strings.HasPrefix(firefoxExecuteFilePath, "~/") {
 		home, _ := os.UserHomeDir()
-		firefoxExecuteFilePath = filepath.Join(home, profilesIniPath[2:])
+		firefoxExecuteFilePath = filepath.Join(home, firefoxExecuteFilePath[2:])
 	}
 
 	for _, profileName := range profilesName {
