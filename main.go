@@ -57,9 +57,17 @@ func setupWindow(title string) *gtk.Window {
 	win.Connect("destroy", func() {
 		gtk.MainQuit()
 	})
+	// quit on out blur
 	win.Connect("focus-out-event", func(widget *gtk.Window, event *gdk.Event) bool {
 		gtk.MainQuit()
 		return false // Continue with the default behavior
+	})
+	// quit on press ESC
+	win.Connect("key-press-event", func(window *gtk.Window, event *gdk.Event) {
+		keyEvent := &gdk.EventKey{Event: event}
+		if keyEvent.KeyVal() == gdk.KEY_Escape {
+			gtk.MainQuit()
+		}
 	})
 
 	// vertical button box
