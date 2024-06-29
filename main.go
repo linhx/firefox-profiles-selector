@@ -53,6 +53,7 @@ func setupWindow(title string) *gtk.Window {
 	win.SetTitle(title)
 	win.SetDecorated(false)
 	win.SetDefaultSize(windowWidth, windowHeight)
+	win.SetPosition(gtk.WIN_POS_CENTER)
 	win.Connect("destroy", func() {
 		gtk.MainQuit()
 	})
@@ -60,7 +61,6 @@ func setupWindow(title string) *gtk.Window {
 		gtk.MainQuit()
 		return false // Continue with the default behavior
 	})
-	moveWinToCenter(win, windowWidth, windowHeight)
 
 	// vertical button box
 	mainBox, err := gtk.BoxNew(gtk.ORIENTATION_VERTICAL, 2)
@@ -122,18 +122,6 @@ func setupWindow(title string) *gtk.Window {
 	mainBox.PackStart(btnBox, false, false, 0)
 	win.Add(mainBox)
 	return win
-}
-
-func moveWinToCenter(win *gtk.Window, width int, height int) {
-	screen, _ := gdk.ScreenGetDefault()
-	display, _ := screen.GetDisplay()
-	monitor, _ := display.GetPrimaryMonitor()
-	screenWidth := monitor.GetGeometry().GetWidth()
-	screenHeight := monitor.GetGeometry().GetHeight()
-
-	posX := (screenWidth - width) / 2
-	posY := (screenHeight - height) / 2
-	win.Move(posX, posY)
 }
 
 func getProfiles(profilesIniPath string) []string {
