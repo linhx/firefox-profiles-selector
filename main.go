@@ -15,6 +15,16 @@ import (
 )
 
 var url string
+var logger *log.Logger
+
+func init() {
+	// Initialize the logger
+	file, err := os.OpenFile("app.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	if err != nil {
+		log.Fatal(err)
+	}
+	logger = log.New(file, "", log.Ldate|log.Ltime|log.Lshortfile)
+}
 
 func main() {
 	if len(os.Args) > 1 {
@@ -36,7 +46,7 @@ const BUTTON_WIDTH = 40
 func setupWindow(title string) *gtk.Window {
 	win, err := gtk.WindowNew(gtk.WINDOW_TOPLEVEL)
 	if err != nil {
-		log.Fatal("Unable to create window:", err)
+		logger.Fatal("Unable to create window:", err)
 	}
 	windowWidth := 400
 	windowHeight := 200
@@ -55,7 +65,7 @@ func setupWindow(title string) *gtk.Window {
 	// vertical button box
 	mainBox, err := gtk.BoxNew(gtk.ORIENTATION_VERTICAL, 2)
 	if err != nil {
-		log.Fatal("Unable to create mainBox:", err)
+		logger.Fatal("Unable to create mainBox:", err)
 	}
 	mainBox.SetVAlign(gtk.ALIGN_CENTER)
 	mainBox.SetBorderWidth(20)
@@ -63,7 +73,7 @@ func setupWindow(title string) *gtk.Window {
 	// url label
 	urlLabel, err := gtk.LabelNew(url)
 	if err != nil {
-		log.Fatal("Unable to create btmBox:", err)
+		logger.Fatal("Unable to create btmBox:", err)
 	}
 	urlLabel.SetMaxWidthChars(250)
 	urlLabel.SetEllipsize(pango.ELLIPSIZE_MIDDLE)
@@ -73,7 +83,7 @@ func setupWindow(title string) *gtk.Window {
 	// horizontal button box
 	btnBox, _ := gtk.BoxNew(gtk.ORIENTATION_HORIZONTAL, 6)
 	if err != nil {
-		log.Fatal("Unable to create btmBox:", err)
+		logger.Fatal("Unable to create btmBox:", err)
 	}
 	btnBox.SetHAlign(gtk.ALIGN_CENTER)
 
@@ -87,7 +97,7 @@ func setupWindow(title string) *gtk.Window {
 	exeDir := filepath.Dir(exePath)
 	cfg, err := ini.Load(filepath.Join(exeDir, "config.ini"))
 	if err != nil {
-		fmt.Printf("Fail to read file: %v", err)
+		logger.Printf("Fail to read file: %v", err)
 		os.Exit(1)
 	}
 	profilesIniPath := cfg.Section("setting").Key("profiles_path").String()
@@ -147,7 +157,7 @@ func showProfilesButton(buttonContainer *gtk.Box, profileName string, execPath s
 	btn.Connect("clicked", func() {
 		cmd := exec.Command(execPath, "-P", profileName, "-new-tab", url)
 		if err := cmd.Start(); err != nil {
-			log.Printf("Failed to start cmd: %v", err)
+			logger.Printf("Failed to start cmd: %v", err)
 			gtk.MainQuit()
 			return
 		}
