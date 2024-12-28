@@ -10,7 +10,6 @@ import (
 
 	"github.com/gotk3/gotk3/gdk"
 	"github.com/gotk3/gotk3/gtk"
-	"github.com/gotk3/gotk3/pango"
 	"gopkg.in/ini.v1"
 )
 
@@ -27,7 +26,7 @@ func init() {
 }
 
 func main() {
-	if len(os.Args) > 1 {
+	if len(os.Args) > 1 && len(os.Args[1]) > 2 {
 		url = os.Args[1]
 	} else {
 		url = "about:newtab"
@@ -78,15 +77,9 @@ func setupWindow(title string) *gtk.Window {
 	mainBox.SetVAlign(gtk.ALIGN_CENTER)
 	mainBox.SetBorderWidth(20)
 
-	// url label
-	urlLabel, err := gtk.LabelNew(url)
-	if err != nil {
-		logger.Fatal("Unable to create btmBox:", err)
-	}
-	urlLabel.SetMaxWidthChars(250)
-	urlLabel.SetEllipsize(pango.ELLIPSIZE_MIDDLE)
-	urlLabel.SetMarginBottom(20)
-	mainBox.Add(urlLabel)
+	// add url view
+	urlView := createUrlView(url)
+	mainBox.Add(urlView)
 
 	// horizontal button box
 	btnBox, _ := gtk.BoxNew(gtk.ORIENTATION_HORIZONTAL, 6)
@@ -162,4 +155,38 @@ func showProfilesButton(buttonContainer *gtk.Box, profileName string, execPath s
 	})
 	btn.SetLabel(profileName)
 	buttonContainer.PackEnd(btn, false, false, 0)
+}
+
+func createUrlView(_url string) *gtk.ScrolledWindow {
+	// Create a ScrolledWindow
+	scrolledWindow, err := gtk.ScrolledWindowNew(nil, nil)
+	if err != nil {
+		log.Fatal("Unable to create scrolled window:", err)
+	}
+
+	// Set scrolled window properties
+	scrolledWindow.SetPolicy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+
+	// Create a TextView
+	textView, err := gtk.TextViewNew()
+	if err != nil {
+		log.Fatal("Unable to create text view:", err)
+	}
+
+	// Set TextView as read-only
+	textView.SetEditable(false)
+	textView.SetCursorVisible(false)
+	textView.SetWrapMode(gtk.WRAP_CHAR)
+
+	// Get the TextView buffer and set some text
+	buffer, err := textView.GetBuffer()
+	if err != nil {
+		log.Fatal("Unable to get text buffer:", err)
+	}
+	buffer.SetText(_url)
+
+	// Add the TextView to the ScrolledWindow
+	scrolledWindow.Add(textView)
+	scrolledWindow.SetMarginBottom(20)
+	return scrolledWindow
 }
