@@ -39,7 +39,7 @@ jobs:
       run: tar -czvf ${{ github.event.repository.name }}.tar.gz ./firefox-profiles-selector install.sh config.ini icon.png
 
     - name: Upload built file
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         path: ${{ github.event.repository.name }}.tar.gz
 

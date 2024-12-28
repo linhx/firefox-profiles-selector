@@ -34,4 +34,3 @@ But opening Profile manager window is slow. So I create this simple app for fast
 ```shell
 sudo apt-get install build-essential libgtk-3-dev
 ```
-
